@@ -1,0 +1,11 @@
+.formLabel {
+  margin-top: 20px;
+  font-weight: 500;
+}
+.formInput {
+  display: block;
+  margin-bottom: 20px;
+  padding: 10px;
+  border-radius: 3px;
+  font-size: 18px;
+}
