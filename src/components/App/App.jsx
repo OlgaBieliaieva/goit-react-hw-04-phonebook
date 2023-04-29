@@ -1,6 +1,5 @@
-import React, { Component } from 'react';
+import { useEffect, useReducer } from 'react';
 import shortid from 'shortid';
-import { Notify } from 'notiflix/build/notiflix-notify-aio';
 import SectionTitle from '../SectionTitle/SectionTitle';
 import ContactForm from '../ContactForm/ContactForm';
 import Filter from '../Filter/Filter';
@@ -8,85 +7,84 @@ import ContactList from '../ContactList/ContactList';
 
 import css from './App.module.css';
 
-class App extends Component {
-  state = {
-    contacts: [],
-    filter: '',
-  };
+function init(state) {
+  const savedContacts = localStorage.getItem('contacts');
+  const parsedContacts = JSON.parse(savedContacts);
 
-  componentDidMount() {
-    try {
-      const savedContacts = localStorage.getItem('contacts');
-      const parsedContacts = JSON.parse(savedContacts);
-
-      if (parsedContacts !== null) {
-        this.setState({ contacts: parsedContacts });
-      }
-    } catch (error) {
-      Notify.failure(error.message);
-    }
+  if (parsedContacts !== null) {
+    return { ...state, contacts: [...parsedContacts] };
   }
+}
 
-  componentDidUpdate(prevProps, prevState) {
-    try {
-      console.log(prevState.contacts);
-      console.log(this.state.contacts);
-      if (prevState.contacts.length !== this.state.contacts.length) {
-        localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
-      }
-    } catch (error) {
-      Notify.failure(error.message);
-    }
+function countReducer(state, action) {
+  switch (action.type) {
+    case 'add':
+      return { ...state, contacts: [...state.contacts, action.payload] };
+
+    case 'delete':
+      return { ...state, contacts: [...action.payload] };
+
+    case 'filter':
+      return { ...state, filter: action.payload };
+
+    default:
+      return;
   }
+}
 
-  addContact = ({ name, number }) => {
-    const contact = {
+export default function App() {
+  const [state, dispatch] = useReducer(
+    countReducer,
+    { contacts: [], filter: '' },
+    init
+  );
+
+  useEffect(() => {
+    localStorage.setItem('contacts', JSON.stringify(state.contacts));
+  }, [state.contacts]);
+
+  const addContact = (name, number) => {
+    const newContact = {
       id: shortid.generate(),
       name: name,
       number: number,
     };
     const contactNames = [];
-    this.state.contacts.map(contact => contactNames.push(contact.name));
+    state.contacts.map(contact => contactNames.push(contact.name));
 
     if (contactNames.includes(name)) {
-      alert(`${name} is already in contacts`);
+      return alert(`${name} is already in contacts`);
     }
-    this.setState(({ contacts }) => ({
-      contacts: [contact, ...contacts],
-    }));
+
+    dispatch({ type: 'add', payload: newContact });
   };
 
-  deleteContact = e => {
+  const deleteContact = e => {
     const contactId = e.target.id;
-    this.setState(({ contacts }) => ({
-      contacts: contacts.filter(contact => contact.id !== contactId),
-    }));
-  };
-
-  handleFilterChange = e => {
-    const { name, value } = e.target;
-    this.setState({ [name]: value });
-  };
-
-  render() {
-    return (
-      <main className={css.appContainer}>
-        <SectionTitle text="Phonebook" />
-        <ContactForm addContact={this.addContact} />
-
-        <SectionTitle text="Contacts" />
-        <Filter
-          filter={this.state.filter}
-          filterChangeHandler={this.handleFilterChange}
-        />
-        <ContactList
-          contacts={this.state.contacts}
-          query={this.state.filter}
-          onDeleteContact={this.deleteContact}
-        />
-      </main>
+    const remainingContacts = state.contacts.filter(
+      contact => contact.id !== contactId
     );
-  }
-}
 
-export default App;
+    dispatch({ type: 'delete', payload: remainingContacts });
+  };
+
+  const handleFilterChange = e => {
+    const { value } = e.target;
+    dispatch({ type: 'filter', payload: value });
+  };
+
+  return (
+    <main className={css.appContainer}>
+      <SectionTitle text="Phonebook" />
+      <ContactForm addContact={addContact} />
+
+      <SectionTitle text="Contacts" />
+      <Filter filter={state.filter} filterChangeHandler={handleFilterChange} />
+      <ContactList
+        contacts={state.contacts}
+        query={state.filter}
+        onDeleteContact={deleteContact}
+      />
+    </main>
+  );
+}

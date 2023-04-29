@@ -12,6 +12,7 @@ const Filter = ({ filter, filterChangeHandler }) => {
         value={filter}
         onChange={filterChangeHandler}
         placeholder="type your query here..."
+        autoComplete="off"
       />
     </label>
   );
