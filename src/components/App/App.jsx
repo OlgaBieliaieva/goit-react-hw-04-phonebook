@@ -13,6 +13,8 @@ function init(state) {
   if (parsedContacts !== null) {
     return { ...state, contacts: [...parsedContacts] };
   }
+
+  return state;
 }
 
 function countReducer(state, action) {
