@@ -4,7 +4,6 @@ import SectionTitle from '../SectionTitle/SectionTitle';
 import ContactForm from '../ContactForm/ContactForm';
 import Filter from '../Filter/Filter';
 import ContactList from '../ContactList/ContactList';
-
 import css from './App.module.css';
 
 function init(state) {
